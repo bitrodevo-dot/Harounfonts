@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>هارون | لوحة الإدارة</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f0f2f5; --bg2: #ffffff; --text: #1a1a2e; --text2: #666;
+      --accent: #2a7d6f; --accent2: #1f5f55; --danger: #e53e3e;
+      --card-border: #d0d7e0; --input-bg: #f7f8fa;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08); --nav-bg: #ffffff;
+    }
+    [data-theme="dark"] {
+      --bg: #0f1117; --bg2: #1a1d27; --text: #e8eaf0; --text2: #9aa0b0;
+      --accent: #3ecfb8; --accent2: #2da898; --danger: #fc5c65;
+      --card-border: #2a2d3a; --input-bg: #13151f;
+      --shadow: 0 4px 24px rgba(0,0,0,0.35); --nav-bg: #13151f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; transition: background 0.3s, color 0.3s;
+    }
+    nav {
+      background: var(--nav-bg);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 64px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .logo { font-size: 2rem; font-weight: 900; color: var(--accent); letter-spacing: -1px; }
+    .back-link {
+      font-size: 0.9rem; color: var(--text2); text-decoration: none;
+      border: 1.5px solid var(--card-border); border-radius: 8px; padding: 6px 14px;
+      transition: background 0.2s;
+    }
+    .back-link:hover { background: var(--input-bg); }
+    .theme-btn {
+      background: none; border: none; cursor: pointer;
+      width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; transition: background 0.2s, transform 0.4s;
+    }
+    .theme-btn:hover { background: rgba(128,128,128,0.1); transform: rotate(20deg); }
+
+    main { max-width: 700px; margin: 0 auto; padding: 40px 20px 80px; }
+    h1 { font-size: 1.7rem; font-weight: 900; margin-bottom: 28px; }
+
+    .card {
+      background: var(--bg2); border: 1.5px solid var(--card-border);
+      border-radius: 18px; padding: 30px; box-shadow: var(--shadow);
+      margin-bottom: 36px;
+    }
+    .card h2 { font-size: 1.15rem; font-weight: 900; margin-bottom: 22px; color: var(--accent); }
+
+    .field { margin-bottom: 20px; }
+    label { display: block; font-weight: 700; font-size: 0.92rem; color: var(--text2); margin-bottom: 7px; }
+    input[type="text"] {
+      width: 100%; padding: 11px 15px;
+      background: var(--input-bg); border: 1.5px solid var(--card-border);
+      border-radius: 10px; font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: 1rem; color: var(--text); outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    .file-drop {
+      border: 2.5px dashed var(--card-border);
+      border-radius: 12px; padding: 24px 16px;
+      text-align: center; cursor: pointer; position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .file-drop:hover, .file-drop.over {
+      border-color: var(--accent);
+      background: rgba(42,125,111,0.04);
+    }
+    .file-drop input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 2.2rem; }
+    .drop-label { font-size: 0.9rem; color: var(--text2); margin-top: 6px; }
+    .drop-chosen { font-size: 0.88rem; font-weight: 700; color: var(--accent); margin-top: 5px; display: none; }
+
+    .preview-img {
+      width: 100%; max-height: 180px; object-fit: cover;
+      border-radius: 10px; margin-top: 14px;
+      border: 1.5px solid var(--card-border); display: none;
+    }
+
+    .size-hint { font-size: 0.8rem; color: var(--text2); margin-top: 6px; }
+
+    .publish-btn {
+      width: 100%; padding: 14px;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 12px; font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: 1.1rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      margin-top: 8px;
+    }
+    .publish-btn:hover { background: var(--accent2); }
+    .publish-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .progress-wrap { margin-top: 14px; display: none; }
+    .progress-bar-bg {
+      background: var(--card-border); border-radius: 99px; height: 8px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 99px; width: 0%; transition: width 0.3s;
+    }
+    .progress-label { font-size: 0.85rem; color: var(--text2); margin-top: 6px; text-align: center; }
+
+    .alert {
+      border-radius: 10px; padding: 13px 18px; font-size: 0.95rem;
+      font-weight: 700; margin-top: 14px; display: none;
+    }
+    .alert.success { background: rgba(42,125,111,0.12); color: var(--accent); }
+    .alert.error   { background: rgba(229,62,62,0.1);  color: var(--danger); }
+
+    .font-list { display: flex; flex-direction: column; gap: 14px; }
+    .font-item {
+      background: var(--bg2); border: 1.5px solid var(--card-border);
+      border-radius: 14px; overflow: hidden; box-shadow: var(--shadow);
+      display: flex; align-items: center; gap: 0;
+    }
+    .font-item img {
+      width: 120px; height: 72px; object-fit: cover; flex-shrink: 0;
+    }
+    .font-item-info { padding: 0 16px; flex: 1; }
+    .font-item-name { font-weight: 700; font-size: 1rem; }
+    .font-item-date { font-size: 0.8rem; color: var(--text2); margin-top: 3px; }
+    .delete-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--danger); font-size: 1.4rem;
+      padding: 12px 16px; transition: background 0.2s; flex-shrink: 0;
+    }
+    .delete-btn:hover { background: rgba(229,62,62,0.08); }
+    .list-empty { color: var(--text2); text-align: center; padding: 30px 0; }
+    .list-loader { text-align: center; padding: 30px 0; color: var(--text2); }
+
+    @media (max-width: 500px) {
+      .font-item img { width: 90px; height: 56px; }
+      .font-item-info { padding: 0 10px; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <span class="logo">هَارون</span>
+  <div class="nav-right">
+    <a href="index.html" class="back-link">← الصفحة الرئيسية</a>
+    <button class="theme-btn" id="themeToggle" title="تبديل الوضع">
+      <svg id="iconSun" viewBox="0 0 24 24" style="display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg id="iconMoon" viewBox="0 0 24 24" style="width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+  <h1>لوحة الإدارة</h1>
+
+  <div class="card">
+    <h2>➕ نشر خط جديد</h2>
+
+    <div class="field">
+      <label for="fontName">اسم الخط</label>
+      <input type="text" id="fontName" placeholder="مثال: خط رمضان 2026" />
+    </div>
+
+    <div class="field">
+      <label>بوستر الخط (صورة)</label>
+      <div class="file-drop" id="posterDrop">
+        <input type="file" id="posterFile" accept="image/*" />
+        <div class="drop-icon">🖼️</div>
+        <div class="drop-label">اضغط أو اسحب صورة هنا</div>
+        <div class="drop-chosen" id="posterChosen"></div>
+      </div>
+      <img id="posterPreview" class="preview-img" alt="معاينة البوستر"/>
+      <div class="size-hint" id="posterSize"></div>
+    </div>
+
+    <div class="field">
+      <label>ملف الخط (TTF / OTF / ZIP)</label>
+      <div class="file-drop" id="fileDrop">
+        <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,.zip" />
+        <div class="drop-icon">📁</div>
+        <div class="drop-label">اضغط أو اسحب ملف الخط هنا</div>
+        <div class="drop-chosen" id="fileChosen"></div>
+      </div>
+      <div class="size-hint" id="fileSize"></div>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">جاري الرفع…</div>
+    </div>
+
+    <div class="alert" id="alertBox"></div>
+
+    <button class="publish-btn" id="publishBtn">نشر الخط</button>
+  </div>
+
+  <div class="card">
+    <h2>📋 الخطوط المنشورة</h2>
+    <div id="fontList" class="list-loader">جاري التحميل…</div>
+  </div>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs,
+    deleteDoc, doc, orderBy, query, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAIGBt0B6-Tl04e1TNOnprJ-WL_7PQFrM4",
+    authDomain: "harron-bot.firebaseapp.com",
+    projectId: "harron-bot",
+    storageBucket: "harron-bot.firebasestorage.app",
+    messagingSenderId: "717376969000",
+    appId: "1:717376969000:web:251e20d075873b0c28581d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  /* ── Supabase Storage ── */
+  const SUPABASE_URL = 'https://jtgyechlkyblkxqdijnq.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0Z3llY2hsa3libGt4cWRpam5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MTMxODksImV4cCI6MjA4NzI4OTE4OX0.8nb23UdtDQkd8vhJU4hs9pqr6CdG8GGrvzHKcOrAvg8';
+  const BUCKET = 'haroon';
+
+  async function uploadToSupabase(file, folder) {
+    const fileName = `${folder}/${file.name}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${fileName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': file.type || 'application/octet-stream',
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    if (!res.ok) {
+      let msg = 'فشل رفع الملف';
+      try { const err = await res.json(); msg = err.message || msg; } catch(_) {}
+      throw new Error(msg);
+    }
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${fileName}`;
+  }
+
+  /* ── Dark mode ── */
+  const applyTheme = t => {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('iconSun').style.display  = t === 'dark' ? 'block' : 'none';
+    document.getElementById('iconMoon').style.display = t === 'dark' ? 'none'  : 'block';
+  };
+  applyTheme(localStorage.getItem('theme') || 'light');
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next); localStorage.setItem('theme', next);
+  });
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1048576).toFixed(2) + ' MB';
+  }
+
+  /* ── File drop helpers ── */
+  function setupDrop(dropId, inputId, chosenId, sizeId, onFile) {
+    const drop   = document.getElementById(dropId);
+    const input  = document.getElementById(inputId);
+    const chosen = document.getElementById(chosenId);
+    const sizeEl = document.getElementById(sizeId);
+
+    const handleFile = f => {
+      chosen.textContent = f.name;
+      chosen.style.display = 'block';
+      sizeEl.textContent = `الحجم: ${fmtSize(f.size)}`;
+      onFile(f);
+    };
+
+    input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0]); });
+    drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', ()  => drop.classList.remove('over'));
+    drop.addEventListener('drop', e => {
+      e.preventDefault(); drop.classList.remove('over');
+      if (e.dataTransfer.files[0]) { input.files = e.dataTransfer.files; handleFile(e.dataTransfer.files[0]); }
+    });
+  }
+
+  let posterFile = null, fontFile = null;
+
+  setupDrop('posterDrop','posterFile','posterChosen','posterSize', f => {
+    posterFile = f;
+    const preview = document.getElementById('posterPreview');
+    preview.src = URL.createObjectURL(f);
+    preview.style.display = 'block';
+  });
+
+  setupDrop('fileDrop','fontFile','fileChosen','fileSize', f => { fontFile = f; });
+
+  /* ── Alert helper ── */
+  function showAlert(msg, type) {
+    const el = document.getElementById('alertBox');
+    el.textContent = msg;
+    el.className = `alert ${type}`;
+    el.style.display = 'block';
+    if (type === 'success') setTimeout(() => el.style.display = 'none', 4000);
+  }
+
+  /* ── Progress ── */
+  function setProgress(pct, label) {
+    document.getElementById('progressWrap').style.display = 'block';
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = label;
+  }
+  function hideProgress() { document.getElementById('progressWrap').style.display = 'none'; }
+
+  /* ── Publish ── */
+  document.getElementById('publishBtn').addEventListener('click', async () => {
+    const name = document.getElementById('fontName').value.trim();
+    if (!name)       { showAlert('⚠️ أدخل اسم الخط', 'error'); return; }
+    if (!posterFile) { showAlert('⚠️ اختر صورة البوستر', 'error'); return; }
+    if (!fontFile)   { showAlert('⚠️ اختر ملف الخط', 'error'); return; }
+
+    const btn = document.getElementById('publishBtn');
+    btn.disabled = true;
+    document.getElementById('alertBox').style.display = 'none';
+
+    try {
+      setProgress(20, 'جاري رفع البوستر…');
+      const posterURL = await uploadToSupabase(posterFile, 'posters');
+
+      setProgress(55, 'جاري رفع ملف الخط…');
+      const fontURL = await uploadToSupabase(fontFile, 'fonts');
+
+      setProgress(85, 'جاري الحفظ في Firebase…');
+      await addDoc(collection(db, 'fonts'), {
+        name,
+        posterBase64: posterURL,
+        fileBase64: fontURL,
+        fileName: fontFile.name,
+        createdAt: serverTimestamp()
+      });
+
+      setProgress(100, 'تم الرفع!');
+      setTimeout(hideProgress, 1500);
+      showAlert('✅ تم نشر الخط بنجاح!', 'success');
+
+      document.getElementById('fontName').value = '';
+      document.getElementById('posterPreview').style.display = 'none';
+      ['posterChosen','fileChosen'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+      ['posterSize','fileSize'].forEach(id => { document.getElementById(id).textContent = ''; });
+      posterFile = null; fontFile = null;
+
+      loadFontList();
+    } catch(e) {
+      hideProgress();
+      showAlert('❌ فشل الرفع: ' + e.message, 'error');
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ── Font list ── */
+  async function loadFontList() {
+    const el = document.getElementById('fontList');
+    el.className = 'list-loader';
+    el.innerHTML = 'جاري التحميل…';
+    try {
+      const snap = await getDocs(query(collection(db, 'fonts'), orderBy('createdAt','desc')));
+      if (snap.empty) {
+        el.className = 'list-empty';
+        el.innerHTML = 'لا توجد خطوط منشورة بعد';
+        return;
+      }
+      el.className = 'font-list';
+      el.innerHTML = '';
+      snap.forEach(d => {
+        const data = d.data();
+        const ts   = data.createdAt?.toDate?.();
+        const date = ts ? ts.toLocaleDateString('ar-EG') : '—';
+        const item = document.createElement('div');
+        item.className = 'font-item';
+        item.innerHTML = `
+          <img src="${data.posterBase64}" alt="${data.name}" />
+          <div class="font-item-info">
+            <div class="font-item-name">${data.name}</div>
+            <div class="font-item-date">${date}</div>
+          </div>
+          <button class="delete-btn" data-id="${d.id}" title="حذف">🗑️</button>`;
+        el.appendChild(item);
+      });
+
+      el.addEventListener('click', async e => {
+        const btn = e.target.closest('.delete-btn');
+        if (!btn) return;
+        if (!confirm('هل تريد حذف هذا الخط نهائياً؟')) return;
+        try {
+          await deleteDoc(doc(db, 'fonts', btn.dataset.id));
+          btn.closest('.font-item').remove();
+          if (!el.querySelector('.font-item')) {
+            el.className = 'list-empty';
+            el.innerHTML = 'لا توجد خطوط منشورة بعد';
+          }
+        } catch(e) {
+          alert('فشل الحذف: ' + e.message);
+        }
+      });
+    } catch(e) {
+      el.className = 'list-empty';
+      el.innerHTML = '❌ خطأ في التحميل: ' + e.message;
+    }
+  }
+
+  loadFontList();
+</script>
+</body>
+</html>
