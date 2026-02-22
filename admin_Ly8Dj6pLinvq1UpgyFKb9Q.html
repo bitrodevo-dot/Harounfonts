@@ -244,14 +244,22 @@
     applyTheme(next); localStorage.setItem('theme', next);
   });
 
-  /* ── File → Base64 ── */
-  function toBase64(file) {
-    return new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload  = () => res(r.result);   // data:…;base64,…
-      r.onerror = rej;
-      r.readAsDataURL(file);
+  /* ── Cloudinary Upload ── */
+  const CLOUD_NAME = 'dczi42yyc';
+  const UPLOAD_PRESET = 'haroon_unsigned';
+
+  async function uploadToCloudinary(file, folder) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    formData.append('folder', folder);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+      method: 'POST',
+      body: formData
     });
+    if (!res.ok) throw new Error('فشل رفع الملف على Cloudinary');
+    const data = await res.json();
+    return data.secure_url;
   }
 
   function fmtSize(bytes) {
@@ -268,15 +276,9 @@
     const sizeEl = document.getElementById(sizeId);
 
     const handleFile = f => {
-      const MB = f.size / 1048576;
       chosen.textContent = f.name;
       chosen.style.display = 'block';
-      const limit = 0.9; // Firestore doc limit safety
-      if (MB > limit) {
-        sizeEl.innerHTML = `<span class="size-warn">⚠️ حجم الملف ${fmtSize(f.size)} — كبير جداً! الحد الأقصى ~900 KB</span>`;
-      } else {
-        sizeEl.textContent = `الحجم: ${fmtSize(f.size)}`;
-      }
+      sizeEl.textContent = `الحجم: ${fmtSize(f.size)}`;
       onFile(f);
     };
 
@@ -324,28 +326,22 @@
     if (!posterFile) { showAlert('⚠️ اختر صورة البوستر', 'error'); return; }
     if (!fontFile)   { showAlert('⚠️ اختر ملف الخط', 'error'); return; }
 
-    const totalMB = (posterFile.size + fontFile.size) / 1048576;
-    if (totalMB > 0.9) {
-      showAlert(`⚠️ المجموع ${fmtSize(posterFile.size + fontFile.size)} — يتجاوز حد Firestore (900 KB). قلل حجم الصورة أو الملف.`, 'error');
-      return;
-    }
-
     const btn = document.getElementById('publishBtn');
     btn.disabled = true;
     document.getElementById('alertBox').style.display = 'none';
 
     try {
-      setProgress(20, 'جاري تحويل البوستر…');
-      const posterBase64 = await toBase64(posterFile);
+      setProgress(20, 'جاري رفع البوستر على Cloudinary…');
+      const posterURL = await uploadToCloudinary(posterFile, 'haroon/posters');
 
-      setProgress(50, 'جاري تحويل ملف الخط…');
-      const fileBase64   = await toBase64(fontFile);
+      setProgress(55, 'جاري رفع ملف الخط على Cloudinary…');
+      const fontURL = await uploadToCloudinary(fontFile, 'haroon/fonts');
 
-      setProgress(80, 'جاري الرفع إلى Firebase…');
+      setProgress(85, 'جاري الحفظ في Firebase…');
       await addDoc(collection(db, 'fonts'), {
         name,
-        posterBase64,
-        fileBase64,
+        posterBase64: posterURL,
+        fileBase64: fontURL,
         fileName: fontFile.name,
         createdAt: serverTimestamp()
       });
